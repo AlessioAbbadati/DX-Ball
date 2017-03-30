@@ -1,69 +1,265 @@
- /*
- *
- *@author Abbadati Alessio - Dinaro Salvatore
- *@version 1.0
- *
- */
- 
-package movingball;
+package bounce;
 
-import java.awt.*;
-import javax.swing.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import javax.swing.GroupLayout;
 
-class movec extends JFrame{
-    int x = 0, y, width = 40, height = 40;
-    int radius = (width / 2);
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.Timer;
+
+/**
+ * 
+ * @version 0.1
+ * @author Abbadati Alessio - Dinaro Salvatore
+ * 
+ */
+class operazioni extends Thread{
     
-    movec(int y){
-        this.y=y;
+    private BallComponent comp;
+    private int STEPS;
+    private JFrame f;
+    
+    public operazioni(BallComponent ball, int steps, JFrame f){
+        this.f=f;
+        comp=ball;
+        STEPS=steps;
     }
     
+    public void run(){
+      try {
+      Ball ball = new Ball(this, f);
+      comp.add(ball);
+      for (int i = 1; i <= STEPS;) {
+        ball.move(comp.getBounds());
+        comp.paint(comp.getGraphics());
+        Thread.sleep(3);
+      }
+    } catch (InterruptedException e) {}
+
+    }
 }
 
-class BallComponent extends JPanel{
+class moveret{
     
-    public void add(Ball b) {
-        balls.add(b);
+    public moveret(){
+        
     }
     
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g); // erase background
-        Graphics2D g2 = (Graphics2D) g;
-        for (Ball b : balls) {
-            g2.fill(b.getShape());
-        }
+    Timer timer;
+    int x = 0, y=620, width = 40, height = 40;
+    int iniziox=0, inizioy, finex=120, finey=20;
+    int frXPos = 500;
+    int speedX = 1;
+    
+    public void movesx(int x, JTextField ret){
+        this.iniziox=x;
+        ActionListener task=new ActionListener(){
+            public void actionPerformed(ActionEvent e) {
+                Point p=new Point(iniziox,y);
+                ret.setLocation(p);
+            }
+        };
+        timer = new Timer(0, task);
+        timer.start();
     }
     
-    private ArrayList<Ball> balls = new ArrayList<Ball>();
+    public void movedx(int x, JTextField ret){
+        this.iniziox=x;
+        ActionListener task=new ActionListener(){
+            public void actionPerformed(ActionEvent e) {
+                Point p=new Point(iniziox,y);
+                ret.setLocation(p);
+            }
+        };
+        timer = new Timer(0, task);
+        timer.start();
+    }
 }
 
-class Ball{
-    public void move(Rectangle2D bounds) {
-        x += dx;
-        y += dy;
-        if (x < bounds.getMinX()) {
-            x = bounds.getMinX();
-            dx = -dx;
+class BounceFrame extends JFrame {
+    int x, y=0;
+    JFrame fr;
+    
+    public BounceFrame(JFrame f) {
+    
+    f.setVisible(false);
+    
+    fr=this;
+    
+    JTextField ret=new JTextField();
+    moveret o=new moveret();
+    setResizable(false);
+    
+    JPanel p=new JPanel();
+    p.setSize(1080, 40);
+    p.setBackground(Color.red);
+      
+    setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    setTitle("Bounce");
+    
+    comp = new BallComponent(fr);
+    add(comp, BorderLayout.CENTER);
+    ret.setEditable(false);
+    ret.setBackground(Color.black);
+    ret.setSize(100,40);
+    ret.setLocation((p.getWidth()/2)-50, p.getHeight());
+    p.add(ret);
+    add(p, BorderLayout.SOUTH);
+    System.out.println("p: "+p.getSize()+"ret: "+ret.getSize());
+    System.out.println("p: "+p.getLocation()+"ret: "+ret.getLocation());
+    ret.addKeyListener(new KeyListener(){
+            public void keyTyped(KeyEvent ke) {}
+            
+            public void keyPressed(KeyEvent e) {
+                if(y==0){
+                    addBall();
+                    y=y+1;
+                }
+                if(e.getKeyCode()==37){
+                if(x==0){
+                    o.movesx(x, ret); 
+                    p.repaint();
+                    p.validate();
+                }else{
+                    if(x<=0){
+                        x=0;
+                    }else{
+                        x=x-8;
+                        o.movesx(x, ret);
+                        ret.setLocation(x, getHeight()-100);
+                        p.repaint();
+                        //p.validate();
+                    }
+                }
+            }else{
+                if(e.getKeyCode()==39){
+                    if(x==getWidth()-100){
+                        o.movedx(x, ret);
+                        repaint();
+                    }else{
+                        if(x>=getWidth()-100){
+                            x=getWidth()-100;
+                        }else{
+                            x=x+8;
+                            o.movedx(x, ret);
+                            ret.setLocation(x, getHeight()-100);
+                            repaint();
+                        }
+                    }
+                }
+            }
         }
-        if (x + XSIZE >= bounds.getMaxX()) {
-            x = bounds.getMaxX() - XSIZE;
-            dx = -dx;
-        }
-        if (y < bounds.getMinY()) {
-            y = bounds.getMinY();
-            dy = -dy;
-        }
-        if (y + YSIZE >= bounds.getMaxY()) {
-            y = bounds.getMaxY() - YSIZE;
-            dy = -dy;
-        }
+                    
+        public void keyReleased(KeyEvent ke) {}
+    });
+  }
+    
+  public void addButton(Container c, String title, ActionListener listener) {
+    JButton button = new JButton(title);
+    c.add(button);
+    button.addActionListener(listener);
+  }
+  
+  public void addBall() {
+      operazioni th1=new operazioni(comp, 1000, fr);
+      th1.start();
+  }
+
+  private BallComponent comp=new BallComponent(fr);
+
+  public static final int DEFAULT_WIDTH = 450;
+
+  public static final int DEFAULT_HEIGHT = 350;
+
+  public static final int STEPS = 10000;
+
+  public static final int DELAY = 3;
+}
+
+class BallComponent extends JPanel {
+
+    JFrame f;
+    
+    BallComponent(JFrame fr) {
+        f=fr;
+    }
+
+  public void add(Ball b) {
+    balls.add(b);
+  }
+  
+  public void paintComponent(Graphics g) {
+    super.paintComponent(g); // erase background
+    Graphics2D g2 = (Graphics2D) g;
+    for (Ball b : balls) {
+      g2.fill(b.getShape());
+    }
+  }
+
+  private ArrayList<Ball> balls = new ArrayList<Ball>();
+}
+
+class Ball {
+    
+    Thread th1;
+    JFrame f;
+    
+    Ball(Thread th1, JFrame f){
+        this.f=f;
+        this.th1=th1;
     }
     
-    public Ellipse2D getShape() {
+  public void move(Rectangle2D bounds) {
+    x += dx;
+    y += dy;
+    if (x < bounds.getMinX()) {
+      x = bounds.getMinX();
+      dx = -dx;
+    }
+    if (x + XSIZE >= bounds.getMaxX()) {
+      x = bounds.getMaxX() - XSIZE;
+      dx = -dx;
+    }
+    if (y < bounds.getMinY()) {
+      y = bounds.getMinY();
+      dy = -dy;
+    }
+    if (y + YSIZE >= bounds.getMaxY()) {
+      y = bounds.getMaxY() - YSIZE;
+      dy = -dy;
+    }
+    if(x>=500 && y!=638){
+    }else{
+        if(x>=0 && y!=638){
+        }else{
+            if(y==638){
+                Finale frame=new Finale(f);
+                frame.setVisible(true);
+                th1.stop();
+            }
+            
+        }
+    }
+  }
+
+  public Ellipse2D getShape() {
     return new Ellipse2D.Double(x, y, XSIZE, YSIZE);
   }
 
@@ -75,153 +271,7 @@ class Ball{
 
   private double y = 0;
 
-  private double dx = 1;
+  private double dx = 1.5;
 
-  private double dy = 1;
-}
-
-class moveret extends JPanel{
-
-    Timer timer;
-    int x = 0, y=0, width = 40, height = 40;
-    int iniziox=0, inizioy, finex=120, finey=20;
-    int frXPos = 500;
-    int speedX = 1;
-
-    moveret(int y, int x) {
-        this.inizioy=y;
-        this.iniziox=(x/2)-60;
-    }
-    
-    public void movesx(int x){
-        this.iniziox=x;
-        ActionListener task=new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                repaint(x, inizioy, x+120, finex);
-            }
-        };
-        timer = new Timer(0, task);
-        timer.start();
-    }
-    
-    public void movedx(int x){
-        this.iniziox=x;
-        ActionListener task=new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                repaint(x, inizioy, x+120, finex);
-            }
-        };
-        timer = new Timer(0, task);
-        timer.start();
-    }
-    
-    public void paint(Graphics g) {
-        super.paintComponent(g);
-        g.setColor(Color.black);
-        g.fillRect(iniziox, inizioy, finex, finey);
-        //g.fillOval(x, y, width, height);
-    }
-    
-}
-
-class MovingBall extends JFrame{
-    int x=0, y = 400, width = 40, height = 40;;
-    moveret o;
-    movec c;
-    private BallComponent comp;
-    private JFrame fr;
-    
-    MovingBall(){
-        fr = new JFrame("Moving Ball");
-        fr.setVisible(true);
-        fr.setSize(1080, 720);          
-        fr.setLocationRelativeTo(null);
-        fr.setResizable(false);
-        comp=new BallComponent();
-        fr.add(comp);
-        x=(fr.getWidth()/2)-60;
-        o = new moveret(fr.getHeight()-100, fr.getWidth());
-        fr.add(o);
-        fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        fr.addKeyListener(new KeyListener(){
-            @Override
-            public void keyTyped(KeyEvent e) {
-                
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                addBall();
-            }
-            
-            @Override
-            public void keyReleased(KeyEvent e) {
-                
-            }
-            
-        });
-    }
-    
-    public void addBall(){
-        
-        int STEPS = 100;
-
-        final int DELAY = 3;
-        
-        try {
-            Ball ball = new Ball();
-            comp.add(ball);
-
-            for (int i = 1; i <= STEPS; i++) {
-                STEPS=STEPS+1;
-                ball.move(comp.getBounds());
-                comp.paint(comp.getGraphics());
-                Thread.sleep(DELAY);
-                fr.addKeyListener(new KeyListener(){
-                    
-                    public void keyTyped(KeyEvent ke) {
-                        
-                    }
-
-                    public void keyPressed(KeyEvent e) {
-                        if(e.getKeyCode()==37){
-                        if(x==0){
-                            
-                        }else{
-                            if(x<=0){
-                                x=0;
-                            }else{
-                                x=x-8;
-                                o.movesx(x);
-                            }
-                        }
-                        }else{
-                            if(e.getKeyCode()==39){
-                                if(x==fr.getWidth()-130){
-                                
-                                }else{
-                                    if(x>=fr.getWidth()-130){
-                                        x=fr.getWidth()-130;
-                                    }else{
-                                        x=x+8;
-                                        o.movedx(x);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    public void keyReleased(KeyEvent ke) {
-                        
-                    }
-                    
-                });
-            }
-        } catch (InterruptedException e) {
-    }
-  }
-    
-    public static void main(String args[]) {
-        new MovingBall();
-    }
+  private double dy = 1.5;
 }
